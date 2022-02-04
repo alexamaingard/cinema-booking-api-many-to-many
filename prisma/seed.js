@@ -2,10 +2,12 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 async function seed() {
-    await createCustomer();
+    const customer = await createCustomer();
     const movies = await createMovies();
     const screens = await createScreens();
-    await createScreenings(screens, movies);
+    const screenings = await createScreenings(screens, movies);
+    const seat = await createSeat(screens);
+    const ticket = await createTicket(customer, screenings, seat);
 
     process.exit(0);
 }
@@ -71,6 +73,8 @@ async function createScreens() {
 
 async function createScreenings(screens, movies) {
     const screeningDate = new Date();
+    
+    const screenings = [];
 
     for (const screen of screens) {
         for (let i = 0; i < movies.length; i++) {
@@ -93,8 +97,61 @@ async function createScreenings(screens, movies) {
             });
 
             console.log('Screening created', screening);
+
+            screenings.push(screening);
         }
     }
+
+    return screenings;
+}
+
+async function createSeat(screens){
+    const seat = await prisma.seat.create({
+        data: {
+            number: 1,
+            screen: {
+                connect: {
+                    id: screens[0].id
+                }
+            }
+        }
+    });
+
+    console.log('Seat created', seat);
+
+    return seat;
+}
+
+async function createTicket(customer, screenings, seat){
+    const ticket = await prisma.ticket.create({
+        data: {
+            screening: {
+                connect: {
+                    id: screenings[0].id
+                }
+            },
+            customer: {
+                connect: {
+                    id: customer.id
+                }
+            },
+            seats: {
+                create: [
+                    {
+                        seat: {
+                            connect: {
+                                id: seat.id
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    });
+
+    console.log('Ticket created', ticket);
+
+    return ticket;
 }
 
 seed()
