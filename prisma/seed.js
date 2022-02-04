@@ -6,8 +6,8 @@ async function seed() {
     const movies = await createMovies();
     const screens = await createScreens();
     const screenings = await createScreenings(screens, movies);
-    const seat = await createSeat(screens);
-    const ticket = await createTicket(customer, screenings, seat);
+    await createSeats(screens);
+    await createTicket(customer, screenings);
 
     process.exit(0);
 }
@@ -105,24 +105,28 @@ async function createScreenings(screens, movies) {
     return screenings;
 }
 
-async function createSeat(screens){
-    const seat = await prisma.seat.create({
-        data: {
-            number: 1,
-            screen: {
-                connect: {
-                    id: screens[0].id
+async function createSeats(screens){
+    const numberOfSeats = 5;
+
+    for(let i = 0; i < screens.length; i++){
+        for(let j = 0; j < numberOfSeats; j++){
+            const seat = await prisma.seat.create({
+                data: {
+                    number: j+1,
+                    screen: {
+                        connect: {
+                            id: screens[i].id
+                        }
+                    }
                 }
-            }
+            });
+        
+            console.log('Seat created', seat);
         }
-    });
-
-    console.log('Seat created', seat);
-
-    return seat;
+    }
 }
 
-async function createTicket(customer, screenings, seat){
+async function createTicket(customer, screenings){
     const ticket = await prisma.ticket.create({
         data: {
             screening: {
@@ -140,9 +144,14 @@ async function createTicket(customer, screenings, seat){
                     {
                         seat: {
                             connect: {
-                                id: seat.id
+                                id: 1
                             }
-                        }
+                        },
+                        seat: {
+                            connect: {
+                                id: 2
+                            }
+                        },
                     }
                 ]
             }
