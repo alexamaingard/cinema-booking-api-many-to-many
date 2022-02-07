@@ -41,7 +41,8 @@ const createTicket = async (req, res) => {
     },
     include: {
       customer: true,
-      screening: true
+      screening: true,
+      seats: true
     },
   });
 
